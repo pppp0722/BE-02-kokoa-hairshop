@@ -94,7 +94,9 @@ class ReservationControllerTest {
 
     Hairshop hairshop;
 
-    Designer designer;
+    Designer designer1;
+
+    Designer designer2;
 
     Menu menu;
 
@@ -103,6 +105,10 @@ class ReservationControllerTest {
     Reservation reservation2;
 
     Reservation reservation3;
+
+    Reservation reservation4;
+
+    Reservation reservation5;
 
     @BeforeAll
     void setup() {
@@ -138,14 +144,23 @@ class ReservationControllerTest {
             .build();
         hairshopRepository.save(hairshop);
 
-        designer = Designer.builder()
-            .name("디자이너")
-            .image("디자이너_이미지_URL")
+        designer1 = Designer.builder()
+            .name("디자이너1")
+            .image("디자이너1_이미지_URL")
             .introduction("안녕하세요.")
             .position(Position.DESIGNER)
             .hairshop(hairshop)
             .build();
-        designerRepository.save(designer);
+        designerRepository.save(designer1);
+
+        designer2 = Designer.builder()
+            .name("디자이너2")
+            .image("디자이너2_이미지_URL")
+            .introduction("안녕하세요.")
+            .position(Position.DESIGNER)
+            .hairshop(hairshop)
+            .build();
+        designerRepository.save(designer2);
 
         menu = Menu.builder()
             .name("기본 커트")
@@ -169,7 +184,7 @@ class ReservationControllerTest {
             .request("예쁘게 잘라주세요.")
             .user(user)
             .hairshop(hairshop)
-            .designer(designer)
+            .designer(designer1)
             .menu(menu)
             .build();
         reservationRepository.save(reservation1);
@@ -184,7 +199,7 @@ class ReservationControllerTest {
             .request("예쁘게 잘라주세요.")
             .user(user)
             .hairshop(hairshop)
-            .designer(designer)
+            .designer(designer1)
             .menu(menu)
             .build();
         reservationRepository.save(reservation2);
@@ -199,7 +214,7 @@ class ReservationControllerTest {
             .request("예쁘게 잘라주세요.")
             .user(user)
             .hairshop(hairshop)
-            .designer(designer)
+            .designer(designer1)
             .menu(menu)
             .build();
         reservationRepository.save(reservation3);
@@ -207,8 +222,8 @@ class ReservationControllerTest {
         // ReservationTime 생성
         LocalDate date = LocalDate.now();
         StringTokenizer st;
-        String reservationStartTime = designer.getHairshop().getReservationStartTime();
-        String reservationEndTime = designer.getHairshop().getReservationEndTime();
+        String reservationStartTime = designer1.getHairshop().getReservationStartTime();
+        String reservationEndTime = designer1.getHairshop().getReservationEndTime();
         st = new StringTokenizer(reservationStartTime, ":");
         int startHour = Integer.parseInt(st.nextToken());
         int startMinute = Integer.parseInt(st.nextToken());
@@ -231,8 +246,8 @@ class ReservationControllerTest {
                 .time(startHour + ":" + str)
                 .reserved(false)
                 .build();
-            reservationTime.setDesigner(designer);
-            reservationTime.setHairshop(designer.getHairshop());
+            reservationTime.setDesigner(designer1);
+            reservationTime.setHairshop(designer1.getHairshop());
             reservationTimeRepository.save(reservationTime);
 
             startMinute += 30;
@@ -267,7 +282,7 @@ class ReservationControllerTest {
             .paymentAmount(20000)
             .userId(user.getId())
             .hairshopId(hairshop.getId())
-            .designerId(designer.getId())
+            .designerId(designer1.getId())
             .menuId(menu.getId())
             .build();
 
@@ -313,7 +328,7 @@ class ReservationControllerTest {
             .paymentAmount(20000)
             .userId(user.getId())
             .hairshopId(hairshop.getId())
-            .designerId(designer.getId())
+            .designerId(designer1.getId())
             .menuId(menu.getId())
             .build();
 
@@ -327,11 +342,11 @@ class ReservationControllerTest {
     @Order(3)
     @DisplayName("예약_가능시간을_조회할_수_있다")
     @WithUserDetails(value = "example2@naver.com")
-    void GET_RESERVATIONTIMES_DYNAMIC_TEST() throws Exception {
+    void GET_RESERVATION_TIMES_DYNAMIC_TEST() throws Exception {
         ReservationTimeRequestDtoDynamic requestDto = ReservationTimeRequestDtoDynamic.builder()
-            .date(LocalDate.now())
+            .date(LocalDate.now().plusDays(1))
             .reservationStartTime("10:00")
-            .reservationEndTime("20:00")
+            .reservationEndTime("19:30")
             .build();
 
         mockMvc.perform(
@@ -413,7 +428,7 @@ class ReservationControllerTest {
             .paymentAmount(20000)
             .userId(user.getId())
             .hairshopId(hairshop.getId())
-            .designerId(designer.getId())
+            .designerId(designer1.getId())
             .menuId(menu.getId())
             .build();
 
@@ -459,7 +474,7 @@ class ReservationControllerTest {
             .paymentAmount(20000)
             .userId(user.getId() + 1) // 다른 user_id
             .hairshopId(hairshop.getId())
-            .designerId(designer.getId())
+            .designerId(designer1.getId())
             .menuId(menu.getId())
             .build();
 
@@ -513,39 +528,39 @@ class ReservationControllerTest {
             .andExpect(status().isOk())
             .andDo(print())
             .andDo(document("get-reservations-by-user",
-                    responseFields(
-                        fieldWithPath("[].id").type(JsonFieldType.NUMBER)
-                            .description("[].id"),
-                        fieldWithPath("[].name").type(JsonFieldType.STRING)
-                            .description("[].name"),
-                        fieldWithPath("[].phoneNumber").type(JsonFieldType.STRING)
-                            .description("[].phoneNumber"),
-                        fieldWithPath("[].date").type(JsonFieldType.STRING)
-                            .description("[].date"),
-                        fieldWithPath("[].time").type(JsonFieldType.STRING)
-                            .description("[].time"),
-                        fieldWithPath("[].status").type(JsonFieldType.STRING)
-                            .description("[].status"),
-                        fieldWithPath("[].request").type(JsonFieldType.STRING)
-                            .description("[].request"),
-                        fieldWithPath("[].paymentAmount").type(JsonFieldType.NUMBER)
-                            .description("[].paymentAmount"),
-                        fieldWithPath("[].hairshopId").type(JsonFieldType.NUMBER)
-                            .description("[].hairshopId"),
-                        fieldWithPath("[].hairshopName").type(JsonFieldType.STRING)
-                            .description("[].hairshopName"),
-                        fieldWithPath("[].menuId").type(JsonFieldType.NUMBER)
-                            .description("[].menuId"),
-                        fieldWithPath("[].menuName").type(JsonFieldType.STRING)
-                            .description("[].menuName"),
-                        fieldWithPath("[].designerId").type(JsonFieldType.NUMBER)
-                            .description("[].designerId"),
-                        fieldWithPath("[].designerPosition").type(JsonFieldType.STRING)
-                            .description("[].designerPosition"),
-                        fieldWithPath("[].designerName").type(JsonFieldType.STRING)
-                            .description("[].designerName")
-                    )
-                ));
+                responseFields(
+                    fieldWithPath("[].id").type(JsonFieldType.NUMBER)
+                        .description("[].id"),
+                    fieldWithPath("[].name").type(JsonFieldType.STRING)
+                        .description("[].name"),
+                    fieldWithPath("[].phoneNumber").type(JsonFieldType.STRING)
+                        .description("[].phoneNumber"),
+                    fieldWithPath("[].date").type(JsonFieldType.STRING)
+                        .description("[].date"),
+                    fieldWithPath("[].time").type(JsonFieldType.STRING)
+                        .description("[].time"),
+                    fieldWithPath("[].status").type(JsonFieldType.STRING)
+                        .description("[].status"),
+                    fieldWithPath("[].request").type(JsonFieldType.STRING)
+                        .description("[].request"),
+                    fieldWithPath("[].paymentAmount").type(JsonFieldType.NUMBER)
+                        .description("[].paymentAmount"),
+                    fieldWithPath("[].hairshopId").type(JsonFieldType.NUMBER)
+                        .description("[].hairshopId"),
+                    fieldWithPath("[].hairshopName").type(JsonFieldType.STRING)
+                        .description("[].hairshopName"),
+                    fieldWithPath("[].menuId").type(JsonFieldType.NUMBER)
+                        .description("[].menuId"),
+                    fieldWithPath("[].menuName").type(JsonFieldType.STRING)
+                        .description("[].menuName"),
+                    fieldWithPath("[].designerId").type(JsonFieldType.NUMBER)
+                        .description("[].designerId"),
+                    fieldWithPath("[].designerPosition").type(JsonFieldType.STRING)
+                        .description("[].designerPosition"),
+                    fieldWithPath("[].designerName").type(JsonFieldType.STRING)
+                        .description("[].designerName")
+                )
+            ));
     }
 
 

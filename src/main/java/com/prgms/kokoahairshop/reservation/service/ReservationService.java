@@ -1,5 +1,7 @@
 package com.prgms.kokoahairshop.reservation.service;
 
+import static com.prgms.kokoahairshop.reservation.entity.ReservationStatus.RESERVED;
+
 import com.prgms.kokoahairshop.common.exception.NotFoundException;
 import com.prgms.kokoahairshop.common.util.TimeUtil;
 import com.prgms.kokoahairshop.designer.entity.Designer;
@@ -29,7 +31,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -147,39 +148,25 @@ public class ReservationService {
 
     public List<ReservationTimeResponseDto> findReservationTimesDynamic(Long hairshopId,
         ReservationTimeRequestDtoDynamic requestDto) {
+        List<Designer> allDesigners = designerRepository.findByHairshopId(hairshopId);
         List<Designer> reservedDesigner = designerRepository.findByHairshopIdAndDate(hairshopId,
             requestDto.getDate());
-        List<Designer> allDesigners = designerRepository.findByHairshopId(hairshopId);
-
         List<String> allTimes = TimeUtil.getTimesFromStartAndEndTime(
             requestDto.getReservationStartTime(), requestDto.getReservationEndTime());
         List<ReservationTimeResponseDto> responseDtos = new ArrayList<>();
-        for (Designer designer : reservedDesigner) {
+
+        for (Designer designer : allDesigners) {
             List<String> reservationTimes = new ArrayList<>(allTimes);
-            List<Reservation> reservations = designer.getReservations();
-            for (Reservation reservation : reservations) {
-                if (reservation.getStatus() == ReservationStatus.RESERVED) {
-                    reservationTimes.remove(reservation.getTime());
+            if (reservedDesigner.contains(designer)) {
+                for (Reservation reservation : designer.getReservations()) {
+                    if (reservation.getStatus() == RESERVED) {
+                        reservationTimes.remove(reservation.getTime());
+                    }
                 }
             }
 
             responseDtos.add(ReservationConverter.toReservationTimeResponseDtoDynamic(
                 designer, reservationTimes));
-        }
-
-        for (Designer designer : allDesigners) {
-            boolean contains = false;
-            for (ReservationTimeResponseDto responseDto : responseDtos) {
-                if (Objects.equals(responseDto.getDesignerId(), designer.getId())) {
-                    contains = true;
-                    break;
-                }
-            }
-
-            if (!contains) {
-                responseDtos.add(ReservationConverter.toReservationTimeResponseDtoDynamic(
-                    designer, allTimes));
-            }
         }
 
         return responseDtos;
@@ -193,7 +180,7 @@ public class ReservationService {
         }
 
         Reservation reservation = maybeReservation.get();
-        if (reservation.getStatus() != ReservationStatus.RESERVED) {
+        if (reservation.getStatus() != RESERVED) {
             throw new ReservationNotReservedException("해당 예약은 예약 상태가 아닙니다.");
         }
 
@@ -215,7 +202,7 @@ public class ReservationService {
         }
 
         Reservation reservation = maybeReservation.get();
-        if (reservation.getStatus() != ReservationStatus.RESERVED) {
+        if (reservation.getStatus() != RESERVED) {
             throw new ReservationNotReservedException("해당 예약은 예약 상태가 아닙니다.");
         }
 
