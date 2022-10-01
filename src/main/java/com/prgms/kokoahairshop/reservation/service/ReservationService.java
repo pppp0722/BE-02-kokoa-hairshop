@@ -1,5 +1,6 @@
 package com.prgms.kokoahairshop.reservation.service;
 
+import static com.prgms.kokoahairshop.reservation.converter.ReservationConverter.toReservationTimeResponseDtoDynamic;
 import static com.prgms.kokoahairshop.reservation.entity.ReservationStatus.RESERVED;
 
 import com.prgms.kokoahairshop.common.exception.NotFoundException;
@@ -149,7 +150,7 @@ public class ReservationService {
     public List<ReservationTimeResponseDto> findReservationTimesDynamic(Long hairshopId,
         ReservationTimeRequestDtoDynamic requestDto) {
         List<Designer> allDesigners = designerRepository.findByHairshopId(hairshopId);
-        List<Designer> reservedDesigner = designerRepository.findByHairshopIdAndDate(hairshopId,
+        List<Designer> reservedDesigners = designerRepository.findByHairshopIdAndDate(hairshopId,
             requestDto.getDate());
         List<String> allTimes = TimeUtil.getTimesFromStartAndEndTime(
             requestDto.getReservationStartTime(), requestDto.getReservationEndTime());
@@ -157,7 +158,7 @@ public class ReservationService {
 
         for (Designer designer : allDesigners) {
             List<String> reservationTimes = new ArrayList<>(allTimes);
-            if (reservedDesigner.contains(designer)) {
+            if (reservedDesigners.contains(designer)) {
                 for (Reservation reservation : designer.getReservations()) {
                     if (reservation.getStatus() == RESERVED) {
                         reservationTimes.remove(reservation.getTime());
@@ -165,8 +166,7 @@ public class ReservationService {
                 }
             }
 
-            responseDtos.add(ReservationConverter.toReservationTimeResponseDtoDynamic(
-                designer, reservationTimes));
+            responseDtos.add(toReservationTimeResponseDtoDynamic(designer, reservationTimes));
         }
 
         return responseDtos;
